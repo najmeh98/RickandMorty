@@ -1,5 +1,5 @@
 import React from "react";
 
-export default function Loading() {
+export function Loading() {
   return <p>Loading data ...</p>;
 }
