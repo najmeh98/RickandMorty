@@ -1,26 +1,28 @@
-import { HeartIcon } from "@heroicons/react/24/outline";
-
-export default function Navbar({ children }) {
-  return (
-    <nav className="navbar">
-      <Logo />
-      <Search />
-      {children}
-      <Favourites />
-    </nav>
-  );
-}
+import { HeartIcon, TrashIcon } from "@heroicons/react/24/outline";
+import Modal from "./Modal";
+import { Character } from "./CharacterList";
+import { useState } from "react";
 
 function Logo() {
   return <div className="navbar_logo">Logo🎯</div>;
 }
 
-function Search() {
+export default function Navbar({ children }) {
+  return (
+    <nav className="navbar">
+      <Logo />
+      {children}
+    </nav>
+  );
+}
+
+export function Search({ query, setQuery }) {
   return (
     <input
+      value={query}
+      onChange={(e) => setQuery(e.target.value)}
       type="text"
       name="text"
-      id="text"
       className="text-field"
       placeholder="Search...."
     />
@@ -28,14 +30,30 @@ function Search() {
 }
 
 export function SearchResult({ numOfResult }) {
-  return <div>{numOfResult}</div>;
+  return <div className="navbar__result">Found {numOfResult} characters</div>;
 }
 
-function Favourites() {
+export function Favourites({ favourites, onDeleteFavourite }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <button className="heart">
-      <HeartIcon className="icon" />
-      <span className="badge">4</span>
-    </button>
+    <>
+      <Modal title="List of Favourite" open={isOpen} onOpen={setIsOpen}>
+        {favourites.map((item) => (
+          <Character item={item} key={item.id}>
+            <button
+              className="icon red "
+              onClick={() => onDeleteFavourite(item.id)}
+            >
+              <TrashIcon />
+            </button>
+          </Character>
+        ))}
+      </Modal>
+      <button className="heart" onClick={() => setIsOpen(!isOpen)}>
+        <HeartIcon className="icon" />
+        <span className="badge">{favourites.length}</span>
+      </button>
+    </>
   );
 }
