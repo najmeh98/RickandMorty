@@ -35,5 +35,7 @@ export default function useCharacter(url, query) {
   return {
     isloading,
     characters,
+    setCharacters,
+    setIsLoading,
   };
 }
