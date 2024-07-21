@@ -1,41 +1,86 @@
 import React, { useEffect, useState } from "react";
-import { allCharacters } from "../data/data";
-import Navbar, { SearchResult } from "./components/Navar";
+import Navbar, { Favourites, Search, SearchResult } from "./components/Navar";
 import CharacterDatils from "./components/CharacterDatils";
 import CharacterList from "./components/CharacterList";
 import "./App.css";
-import toast, { Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
+import axios from "axios";
+import { Toaster } from "react-hot-toast";
+import Modal from "./components/Modal";
+import useCharacter from "./hooks/useCharacter";
+import useLocalStorage from "./hooks/useLocalStorage";
 
 export default function App() {
-  const [characters, setCharacters] = useState(allCharacters);
-  const [isloading, setIsLoading] = useState(false);
+  const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState(null);
+
+  const { isloading, characters, setIsLoading, setCharacters } = useCharacter(
+    "https://rickandmortyapi.com/api/character/?name",
+    query
+  );
+
+  const [favourites, setFavourites] = useLocalStorage("FAVOURITE", []);
+
   useEffect(() => {
-    async function fetData() {
+    async function fetchdata() {
       try {
         setIsLoading(true);
-        const res = await fetch("https://rickandmortyapi.com/api/character");
-        if (!res.ok) throw new Error("somethig went wrong");
-        const data = res.json();
-        setCharacters(data.results.slice(0, 5));
-        // setIsLoading(false);
+        const res = await axios.get(
+          "https://rickandmortyapi.com/api/character"
+        );
+        console.log(res);
+        console.log(res.data);
+
+        setCharacters(res.data.results.slice(0, 5));
       } catch (error) {
-        console.log(err.message);
-        toast.error(err.message);
-        // setIsLoading(false);
+        toast.error(error.response.data.error);
       } finally {
         setIsLoading(false);
       }
     }
 
-    fetData();
+    fetchdata();
   }, []);
+
+  const handleSelectCharacter = (id) => {
+    setSelectedId((prevId) => (prevId === id ? null : id));
+  };
+
+  const handleAddFavorite = (char) => {
+    setFavourites((prevfav) => [...prevfav, char]);
+  };
+
+  const handleDeleteFavorite = (id) => {
+    setFavourites((preFav) => preFav.filter((fav) => fav.id !== id));
+    // setFavourites(favourite.filter(fav.id !==id))
+  };
+
+  const isAddToFavorite = favourites.map((fav) => fav.id).includes(selectedId);
+  // [1,2,3]
   return (
     <div className="app">
       <Toaster />
-      <Navbar>{/* <SearchResult numOfResult={characters} /> */}</Navbar>
+      <Modal />
+      <Navbar>
+        <Search query={query} setQuery={setQuery} />
+        {/* <SearchResult numOfResult={characters} /> */}
+        <Favourites
+          favourites={favourites}
+          onDeleteFavourite={handleDeleteFavorite}
+        />
+      </Navbar>
       <Main>
-        <CharacterList characters={characters} isLoading={isloading} />
-        <CharacterDatils />
+        <CharacterList
+          selectedId={selectedId}
+          characters={characters}
+          isLoading={isloading}
+          onSelectCharacter={handleSelectCharacter}
+        />
+        <CharacterDatils
+          selectedId={selectedId}
+          onAddFavourite={handleAddFavorite}
+          isAddToFavorite={isAddToFavorite}
+        />
       </Main>
     </div>
   );
